@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 export default function Home() {
   return (
     <div> 
-       <h1>Hey.....!!!!</h1>
-       <Button>Submit</Button>
+       <h1>Welcome to the World of AI</h1>
+       <Button>Submit...............</Button>
     </div>
   
   );
