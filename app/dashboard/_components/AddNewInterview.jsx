@@ -16,63 +16,88 @@ import { chatSession } from "@/utils/GeminiAIModel";
 
 import { LoaderCircle } from "lucide-react";
 import { db } from "@/utils/db";
-import { MockInterview } from "@/utils/schema";
+
 import { v4 as uuidv4 } from 'uuid';
 import { useUser } from "@clerk/nextjs";
 import moment from "moment";
+import { MockInterview } from '../../../utils/schema';
 
 function AddNewInterview() {
   const [openDialog, setOpenDialog] = useState(false);
   const [jobPosition, setJobPosition] = useState();
   const [jobDescription, setJobDescription] = useState();
-  const [jobExpereince, setJobExpereince] = useState();
+  const [jobExperience, setJobExperience] = useState();
   const [loading, setLoading] = useState(false);  
   const [jsonResponse,setJsonResponse] = useState([]);
   const {user}=useUser();
 
+  async function testConnection() {
+    try {
+      // Example of a simple SELECT query using Drizzle ORM
+      const result = await db.select().from(MockInterview);
+      console.log("Database connection successful:", result);
+    } catch (error) {
+      console.error("Database connection failed:", error);
+    }
+  }
+  
+ 
   const onSubmit = async (e) => {
-    setLoading(true);
     e.preventDefault();
-    console.log(jobPosition, jobDescription, jobExpereince);
-
+    setLoading(true);
+  
+    // Log input values for debugging
+    console.log("Job Position:", jobPosition);
+    console.log("Job Description:", jobDescription);
+    console.log("Job Experience:", jobExperience);
+  
     const InputPrompt =
       "Job Position: " +
       jobPosition +
       ", Job Description: " +
       jobDescription +
       ", Job Experience:" +
-      jobExpereince +
-      ". give me " +
+      jobExperience +
+      ". Give me " +
       process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT +
-      "immportant questions based on this information in  JSON format.Give all question and answered as a JSON field.";
-
-    const result = await chatSession.sendMessage(InputPrompt);
-    const MockResponse = result.response
-      .text()
-      .replace("```json", "")
-      .replace("```", "");
-    console.log(JSON.parse(MockResponse));
-    setJsonResponse(MockResponse);
-
-
-    if(MockResponse){
-    const resp=await db.insert(MockInterview).values({
-      mockId:uuidv4(),
-      jsonMockResp:MockResponse,
-      jobPosition:jobPosition,
-      jobDesc:jobDescription,
-      jobExperience:jobExpereince,
-      createdBy:user?.primaryEmailAddress?.emailAddress,
-      //createdAt:moment.format("YYYY-MM-DD HH:mm:ss")  
-         
-    }).returning({mockId:MockInterview.mockId})
-
-    console.log("INSERTED ID:",resp);
-
-  }else{
-    console.log("Error in generating questions");
-  }
-     setLoading(false);
+      " important questions based on this information in JSON format. Include all questions and answers as a JSON field.";
+  
+    try {
+      // Generate questions using chatSession
+      const result = await chatSession.sendMessage(InputPrompt);
+      const MockResponse = result.response
+        .text()
+        .replace("```json", "")
+        .replace("```", "");
+  
+      // Log the raw response for debugging
+      console.log("Raw Mock Response:", MockResponse);
+  
+      const parsedMockResponse = JSON.parse(MockResponse);
+      const stringifiedMockResponse = JSON.stringify(parsedMockResponse);
+  
+      // Validate input values before inserting
+      if (!jobPosition || !jobDescription || isNaN(parseInt(jobExperience, 10))) {
+        throw new Error("Invalid input values");
+      }
+  
+      // Insert into the database
+      const resp = await db.insert(MockInterview).values({
+        mockId: uuidv4(),
+        jsonMockResp: stringifiedMockResponse,
+        jobPosition: jobPosition,
+        jobDesc: jobDescription,
+        jobExperience: parseInt(jobExperience, 10), // Ensure it's an integer
+        createdBy: user?.primaryEmailAddress?.emailAddress || "anonymous",
+        createdAt: new Date().toISOString(), // Ensure proper date format
+      }).returning(MockInterview.mockId);
+  
+      console.log("Inserted Record:", resp);
+    } catch (error) {
+      console.error("Database Insert Error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div>
@@ -127,7 +152,7 @@ function AddNewInterview() {
                       className="border border-gray-300 rounded-md w-full p-2 mt-2 font-bold"
                       max="50"
                       required
-                      onChange={(e) => setJobExpereince(e.target.value)}
+                      onChange={(e) => setJobExperience(e.target.value)}
                     />
                   </div>
                 </div>
