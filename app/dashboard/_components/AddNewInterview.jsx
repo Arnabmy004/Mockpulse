@@ -81,7 +81,7 @@ function AddNewInterview() {
     if(resp)
     {
       setOpenDialog(false);
-    router.push('/dashboard/interview'+resp[0]?.mockId)
+    router.push('/dashboard/interview/'+resp[0]?.mockId)
 
     }
 
