@@ -17,87 +17,78 @@ import { chatSession } from "@/utils/GeminiAIModel";
 import { LoaderCircle } from "lucide-react";
 import { db } from "@/utils/db";
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { useUser } from "@clerk/nextjs";
 import moment from "moment";
-import { MockInterview } from '../../../utils/schema';
+import { MockInterview } from "../../../utils/schema";
+import { useRouter } from "next/navigation";
+
 
 function AddNewInterview() {
   const [openDialog, setOpenDialog] = useState(false);
   const [jobPosition, setJobPosition] = useState();
-  const [jobDescription, setJobDescription] = useState();
+  const [jobDesc, setJobDesc] = useState();
   const [jobExperience, setJobExperience] = useState();
-  const [loading, setLoading] = useState(false);  
-  const [jsonResponse,setJsonResponse] = useState([]);
-  const {user}=useUser();
+  const [loading, setLoading] = useState(false);
+  const [jsonResponse, setJsonResponse] = useState([]);
+  const router=useRouter();
+  const { user } = useUser();
 
-  async function testConnection() {
-    try {
-      // Example of a simple SELECT query using Drizzle ORM
-      const result = await db.select().from(MockInterview);
-      console.log("Database connection successful:", result);
-    } catch (error) {
-      console.error("Database connection failed:", error);
-    }
-  }
-  
- 
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-  
+
     // Log input values for debugging
     console.log("Job Position:", jobPosition);
-    console.log("Job Description:", jobDescription);
+    console.log("Job Description:", jobDesc);
     console.log("Job Experience:", jobExperience);
-  
+
     const InputPrompt =
       "Job Position: " +
       jobPosition +
       ", Job Description: " +
-      jobDescription +
+      jobDesc +
       ", Job Experience:" +
       jobExperience +
       ". Give me " +
       process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT +
       " important questions based on this information in JSON format. Include all questions and answers as a JSON field.";
-  
-    try {
-      // Generate questions using chatSession
-      const result = await chatSession.sendMessage(InputPrompt);
-      const MockResponse = result.response
-        .text()
-        .replace("```json", "")
-        .replace("```", "");
-  
-      // Log the raw response for debugging
-      console.log("Raw Mock Response:", MockResponse);
-  
-      const parsedMockResponse = JSON.parse(MockResponse);
-      const stringifiedMockResponse = JSON.stringify(parsedMockResponse);
-  
-      // Validate input values before inserting
-      if (!jobPosition || !jobDescription || isNaN(parseInt(jobExperience, 10))) {
-        throw new Error("Invalid input values");
-      }
-  
-      // Insert into the database
-      const resp = await db.insert(MockInterview).values({
-        mockId: uuidv4(),
-        jsonMockResp: stringifiedMockResponse,
-        jobPosition: jobPosition,
-        jobDesc: jobDescription,
-        jobExperience: parseInt(jobExperience, 10), // Ensure it's an integer
-        createdBy: user?.primaryEmailAddress?.emailAddress || "anonymous",
-        createdAt: new Date().toISOString(), // Ensure proper date format
-      }).returning(MockInterview.mockId);
-  
-      console.log("Inserted Record:", resp);
-    } catch (error) {
-      console.error("Database Insert Error:", error);
-    } finally {
-      setLoading(false);
+
+    const result = await chatSession.sendMessage(InputPrompt);
+    const MockJsonResp = result.response
+      .text()
+      .replace("```json", "")
+      .replace("```", "");
+    console.log(JSON.parse(MockJsonResp));
+    setJsonResponse(MockJsonResp);
+
+
+    if(MockJsonResp){
+    const resp = await db.insert(MockInterview).values({
+      mockId: uuidv4(),
+
+      jsonMockResp: MockJsonResp,
+      jobPosition: jobPosition,
+      jobDesc: jobDesc,
+      jobExperience: jobExperience,
+      createdBy: user?.primaryEmailAddress?.emailAddress,
+      createdAt: moment().format("YYYY-MM-DD")
+
+     
+    }).returning({mockId:MockInterview.mockId})
+
+    console.log("Inserted id:",resp);
+    if(resp)
+    {
+      setOpenDialog(false);
+    router.push('/dashboard/interview'+resp[0]?.mockId)
+
     }
+
+  }else{
+    console.log("Error");
+  }
+    setLoading(false);
   };
   return (
     <div>
@@ -131,7 +122,7 @@ function AddNewInterview() {
                       onChange={(e) => setJobPosition(e.target.value)}
                     />
                   </div>
-    
+
                   <div className="mt-4 my-3">
                     <label className="font-bold">
                       Job Description/Teech Stack
@@ -140,7 +131,7 @@ function AddNewInterview() {
                       placeholder="Ex. React,Angular,Node js,MySQL"
                       className="border border-gray-300 rounded-md w-full p-2 mt-2 font-bold"
                       required
-                      onChange={(e) => setJobDescription(e.target.value)}
+                      onChange={(e) => setJobDesc(e.target.value)}
                     />
                   </div>
 
@@ -164,16 +155,18 @@ function AddNewInterview() {
                     Cancel
                   </button>
                   <button
-                    type="submit" disabled={loading}
+                    type="submit"
+                    disabled={loading}
                     className="bg-blue-500 hover:bg-blue-600 text-sm text-white px-4 py-2 rounded-md"
                   >
-                  {loading?
-                  <>
-                  <LoaderCircle className="animate-spin"/>Generating Questions
-                  </>:'start interview'
-                  }
-                    
-                
+                    {loading ? (
+                      <>
+                        <LoaderCircle className="animate-spin" />
+                        Generating Questions
+                      </>
+                    ) : (
+                      "start interview"
+                    )}
                   </button>
                 </div>
               </form>
