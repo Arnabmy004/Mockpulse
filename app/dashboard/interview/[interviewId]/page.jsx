@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import Webcam from "react-webcam";
 import { Lightbulb, WebcamIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 function Interview({ params }) {
   const [interviewData, setInterviewData] = useState(null);
@@ -27,9 +28,8 @@ function Interview({ params }) {
   return (
     <div className="my-10">
       <div className="flex justify-items items-center">
-      <h2 className="font-bold text-2xl">Let's Get Started</h2>
+        <h2 className="font-bold text-2xl">Let's Get Started</h2>
       </div>
-     
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 ">
         {interviewData && (
@@ -87,7 +87,9 @@ function Interview({ params }) {
         </div>
       </div>
       <div className="flex justify-end items-end">
-        <Button>Start Interview</Button>
+        <Link href={`/dashboard/interview/${params.interviewId}/start`}>
+          <Button>Start Interview</Button>
+        </Link>
       </div>
     </div>
   );
