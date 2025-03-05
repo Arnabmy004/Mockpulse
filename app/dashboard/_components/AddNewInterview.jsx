@@ -46,15 +46,18 @@ function AddNewInterview() {
       setJsonResponse(MockJsonResp);
 
       if (MockJsonResp) {
-        const resp = await db.insert(MockInterview).values({
-          mockId: uuidv4(),
-          jsonMockResp: MockJsonResp,
-          jobPosition,
-          jobDesc,
-          jobExperience,
-          createdBy: user?.primaryEmailAddress?.emailAddress,
-          createdAt: moment().format("YYYY-MM-DD"),
-        }).returning({ mockId: MockInterview.mockId });
+        const resp = await db
+          .insert(MockInterview)
+          .values({
+            mockId: uuidv4(),
+            jsonMockResp: MockJsonResp,
+            jobPosition,
+            jobDesc,
+            jobExperience,
+            createdBy: user?.primaryEmailAddress?.emailAddress,
+            createdAt: moment().format("YYYY-MM-DD"),
+          })
+          .returning({ mockId: MockInterview.mockId });
 
         if (resp) {
           setOpenDialog(false);
@@ -99,7 +102,9 @@ function AddNewInterview() {
                     />
                   </div>
                   <div className="mt-4 my-3">
-                    <label className="font-bold">Job Description/Tech Stack</label>
+                    <label className="font-bold">
+                      Job Description/Tech Stack
+                    </label>
                     <textarea
                       placeholder="Ex. React, Angular, Node.js, MySQL"
                       className="border border-gray-300 rounded-md w-full p-2 mt-2 font-bold focus:outline-blue-500"
@@ -132,11 +137,18 @@ function AddNewInterview() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`text-sm text-white px-4 py-2 rounded-md ${loading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"}`}
+                    className={`text-sm text-white px-4 py-2 rounded-md ${
+                      loading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
+                    }`}
                   >
                     {loading ? (
                       <div className="flex items-center">
-                        <Spinner animation="border" role="status" size="sm" className="mr-2" />
+                        <Spinner
+                          animation="border"
+                          role="status"
+                          size="sm"
+                          className="mr-2"
+                        />
                         Generating Questions
                       </div>
                     ) : (
