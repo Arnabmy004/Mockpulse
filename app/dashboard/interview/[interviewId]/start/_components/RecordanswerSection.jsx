@@ -1,12 +1,13 @@
 "use client";
 
-import React, { use } from "react";
+import React, { useEffect } from "react";
 import Webcam from "react-webcam";
 import Image from "next/image";
-import wecamImage from "./public/webcam.png";
+
 import useSpeechToText from "react-hook-speech-to-text";
 import { Mic } from "lucide-react";
-function RecordanswerSection() {
+import { toast } from "sonner";
+function RecordanswerSection({ mockInterviewQuestion, activeQuestionIndex }) {
   const [userAnswer, setUserAnswer] = useState("");
   const {
     error,
@@ -32,8 +33,11 @@ const saveUserAnswer=()=>{
 
       if(userAnswer?.length<10)
       {
+        toast("Error while recording your answer, please try again");
         return ;
       }
+      const feedBackPrompt ="Question"+mockInterviewQuestion[activeQuestionIndex]?.question+
+      "Answer:"+userAnswer;
     }else{
       startSpeechToText();
     }
@@ -44,7 +48,7 @@ const saveUserAnswer=()=>{
     <div className="flex  items-center justify-center">
       <div className="flex flex-col my-20 items-center bg-black justify-center h-screen  rounded-lg p-5">
         <Image
-          src={"./public/webcam.png"}
+          src={"/webcam.png"}
           alt="webcam"
           width={200}
           height={200}

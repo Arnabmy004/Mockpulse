@@ -38,7 +38,10 @@ function StartInterview({params}) {
       activeQuestionIndex={activeQuestionIndex} 
     />
     {/* audio/video recoriding */}
-    <RecordanswerSection />
+    <RecordanswerSection
+       mockInterviewQuestion={mockInterviewDetails?.questions || []} 
+       activeQuestionIndex={activeQuestionIndex}
+    />
 
    </div>
 
